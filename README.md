@@ -1,7 +1,7 @@
 # lpe
 LPE (Linux Privilege Escalation)
 
-**Command:** * *python3 lpe.py* *
+**Command:** *python3 lpe.py*
 
 <b> Supports </b> python2 also.
 
